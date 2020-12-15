@@ -89,7 +89,8 @@ class FormaliciousSnippetHookRenderForm extends FormaliciousSnippets
 
                     if (!empty($formit->config['formaliciousTplStep'])) {
                         $formOutput = $this->getChunk($formit->config['formaliciousTplStep'], array_merge($step->toArray(), [
-                            'fields' => implode(PHP_EOL, $stepOutput)
+                            'fields'     => implode(PHP_EOL, $stepOutput),
+                            'totalSteps' => count($form->getSteps())
                         ]));
                     } else {
                         $formOutput = implode(PHP_EOL, $stepOutput);
