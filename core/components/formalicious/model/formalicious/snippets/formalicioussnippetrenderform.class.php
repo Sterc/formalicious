@@ -241,7 +241,8 @@ class FormaliciousSnippetRenderForm extends FormaliciousSnippets
                 }
 
                 return $this->getChunk($this->getProperty('tplForm'), array_merge($placeholders, $parameters, [
-                    'FormItParameters' => $this->parseParameters($parameters)
+                    'FormItParameters'      => $this->parseParameters($parameters),
+                    'FormItParametersArray' => $parameters
                 ]));
             }
         }
