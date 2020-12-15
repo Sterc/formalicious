@@ -71,6 +71,8 @@ class FormaliciousSnippetRenderForm extends FormaliciousSnippets
 
                 'formaliciousFormId'    => $form->get('id'),
                 'formaliciousStep'      => 1,
+                'usePdoTools'           => $this->getProperty('usePdoTools'),
+                'usePdoElementsPath'    => $this->getProperty('usePdoElementsPath')
             ];
 
             $placeholders = [
