@@ -27,6 +27,8 @@ class FormaliciousSnippetHookRenderForm extends FormaliciousSnippets
      */
     public function run($hook, array $errors = [])
     {
+        $this->properties = array_merge($this->properties, $hook->config);
+        
         $formit =& $hook->formit;
         $values = $hook->getValues();
 
