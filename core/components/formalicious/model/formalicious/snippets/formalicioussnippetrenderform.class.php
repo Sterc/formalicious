@@ -127,6 +127,18 @@ class FormaliciousSnippetRenderForm extends FormaliciousSnippets
 
                     $currentStepIndex++;
                 }
+                /*
+                    Fix for prehooks: In the Formalicious manager component, hooks added to a form's Advanced Settings Prehooks
+                    do not get added (only ones added via the FormaliciousRenderForm snippet call are). This change solves the
+                    issue by merging the two hook sources
+                */
+                $formPrehooks = explode(',', trim($form->get('prehooks')));
+                $formPrehooks = !empty($formPrehooks) ? array_map('trim', $formPrehooks) : $formPrehooks ;
+
+                $scriptPrehooks = explode(',', trim($this->getProperty('preHooks')));
+                $scriptPrehooks = !empty($scriptPrehooks) ? array_map('trim', $scriptPrehooks) : $scriptPrehooks ;
+
+                $prehooks = array_filter(array_merge($formPrehooks, $scriptPrehooks));
 
                 if ($form->get('posthooks')) {
                     $hooks = array_merge(
@@ -145,7 +157,7 @@ class FormaliciousSnippetRenderForm extends FormaliciousSnippets
                     $hooks[] = 'FormaliciousHookHandleForm';
                 }
 
-                if ($currentStep >= $totalSteps) {
+                if ($currentStep >= $totalSteps && isset($_POST[$parameters['submitVar']])) {
                     if (!in_array('FormaliciousHookRemoveForm', $hooks, true)) {
                         $hooks[] = 'FormaliciousHookRemoveForm';
                     }
@@ -196,8 +208,30 @@ class FormaliciousSnippetRenderForm extends FormaliciousSnippets
                 } else {
                     $hooks[] = 'redirect';
 
+                    /*
+                        Set up redirect in a way that allows variable/dynamic destination, based on
+                        value stored in the submit input/button. This way, form data on the step that is
+                        being navigated away from will always be posted/saved. Navigation and pagination
+                        should then be done via submit inputs/buttons instead of <a> tags.
+
+                        A related change to FormIt's Request class is necessary for this additional functionality.
+                    */
+
+                    # Default redirect destination
+                    $destination = $currentStep + 1;
+
+                    # Check for alternate destination request
+                    if ($_POST) {
+                        foreach ($_POST as $k => $v) {
+                            if (strpos($k, $parameters['submitVar']) !== false ) {
+                                $destination = is_numeric($v) ? $v : $destination ;
+                                break;
+                            }
+                        }
+                    }
+
                     $parameters['redirectTo'] = $this->getStepUrl([
-                        $this->getProperty('stepParam') => $currentStep + 1
+                        $this->getProperty('stepParam') => (int)$destination
                     ], 'full');
 
                     if (empty($placeholders['submitTitle'])) {
@@ -206,7 +240,7 @@ class FormaliciousSnippetRenderForm extends FormaliciousSnippets
                 }
 
                 $parameters['hooks'] = $this->parseHooks($hooks);
-                $parameters['preHooks'] = $this->parseHooks($this->getProperty('preHooks'));
+                $parameters['preHooks'] = $this->parseHooks($prehooks);
                 $parameters['renderHooks'] = $this->parseHooks($this->getProperty('renderHooks'));
                 $parameters['validate'] = $this->parseValidation($validation);
 
@@ -224,21 +258,23 @@ class FormaliciousSnippetRenderForm extends FormaliciousSnippets
                 $parameters['formaliciousTplNavigationItem'] = $this->getProperty('tplNavigationItem');
                 $parameters['formaliciousTplNavigationWrapper'] = $this->getProperty('tplNavigationWrapper');
 
-                if ($currentStep <= 1) {
-                    $placeholders['prevUrl'] = $this->getStepUrl();
-                } else {
+                if ($currentStep > 1) {
                     $placeholders['prevUrl'] = $this->getStepUrl([
                         $this->getProperty('stepParam') => $currentStep - 1
                     ]);
+                    $placeholders['submitValPrev'] = $currentStep - 1;
                 }
 
-                if ($totalSteps === 1) {
-                    $placeholders['currentUrl'] = $this->getStepUrl();
-                } else {
-                    $placeholders['currentUrl'] = $this->getStepUrl([
-                        $this->getProperty('stepParam') => $currentStep
-                    ]);
-                }
+                $placeholders['submitValLast'] = $totalSteps;
+
+                # Suggest renaming this placeholder, as it makes its purpose more immediately clear
+                $placeholders['formAction'] = $totalSteps === 1
+                    ? $this->getStepUrl()
+                    : $this->getStepUrl([$this->getProperty('stepParam') => $currentStep])
+                    ;
+
+                # Set orignal for backward compatibility
+                $placeholders['currentUrl'] = $placeholders['formAction'];
 
                 return $this->getChunk($this->getProperty('tplForm'), array_merge($placeholders, $parameters, [
                     'FormItParameters' => $this->parseParameters($parameters)

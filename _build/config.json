@@ -147,7 +147,7 @@
             "area": "formalicious"
         },{
             "key": "preview_css",
-            "value": "/assets/components/formalicious/css/mgr/preview.css",
+            "value": "{assets_url}components/formalicious/css/mgr/preview.css",
             "area": "formalicious"
         },{
             "key": "source",
