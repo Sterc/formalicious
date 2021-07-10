@@ -137,9 +137,9 @@ class FormaliciousSnippetRenderForm extends FormaliciousSnippets
                     $hooks = array_filter(explode(',', $this->getProperty('hooks')));
                 }
 
-                if (!in_array('spam', $hooks, true)) {
-                    $hooks[] = 'spam';
-                }
+                //if (!in_array('spam', $hooks, true)) {
+                //    $hooks[] = 'spam';
+                //}
 
                 if (!in_array('FormaliciousHookHandleForm', $hooks, true)) {
                     $hooks[] = 'FormaliciousHookHandleForm';
